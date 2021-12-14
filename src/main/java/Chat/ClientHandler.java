@@ -8,6 +8,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -30,7 +32,11 @@ public class ClientHandler {
             this.inputStream = new DataInputStream(socket.getInputStream());
             this.outputStream = new DataOutputStream(socket.getOutputStream());
             this.name = "";
-            new Thread(() -> {
+
+
+            //new Thread(() -> {
+            ExecutorService service = Executors.newFixedThreadPool(2);
+            service.submit(() -> {
                 try {
                     authentification();
                     readMessages();
@@ -39,10 +45,10 @@ public class ClientHandler {
                 } finally {
                     closeConnection();
                 }
-            }).start();
+            });
 
             // убить через 120 сек, если не авторизовался
-            Thread killThread = new Thread(() -> {
+            service.submit(() -> {
                 try{
                     TimeUnit.SECONDS.sleep(120);
                 } catch (InterruptedException e) {
@@ -56,7 +62,7 @@ public class ClientHandler {
                     }
                 }
             });
-            killThread.start();
+            service.shutdown();
 
         } catch (IOException ex) {
             System.out.println("Проблема при создании клиента");
