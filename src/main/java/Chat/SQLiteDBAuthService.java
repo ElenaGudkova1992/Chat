@@ -5,6 +5,9 @@ package Chat;
  * 2. После загрузки клиента показывать ему последние 100 строк чата.
  */
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import java.sql.*;
 import java.util.Optional;
 
@@ -13,6 +16,7 @@ public class SQLiteDBAuthService implements AuthService {
 
     private static Connection connection; // интерфейс для соединения с базой данных
     private static Statement statement; // интерфейс для отправки запросов в БД
+    private static final Logger LOGGER = LogManager.getLogger(SQLiteDBAuthService.class);
 
     @Override
     public void start() throws SQLException {
@@ -33,6 +37,7 @@ public class SQLiteDBAuthService implements AuthService {
                     ");");
         } catch (SQLException throwables) {
             throwables.printStackTrace();
+            LOGGER.error("[ОШИБКА]: " + throwables);
         }
     }
 
@@ -43,6 +48,7 @@ public class SQLiteDBAuthService implements AuthService {
             result = resultSet.next();
         } catch (SQLException e) {
             e.printStackTrace();
+            LOGGER.error("[ОШИБКА]: " + e);
         }
         return !result;
     }
@@ -57,6 +63,7 @@ public class SQLiteDBAuthService implements AuthService {
                         "('nick3', 'login3', 'pass3');");
             } catch (SQLException throwables) {
                 throwables.printStackTrace();
+                LOGGER.error("[ОШИБКА]: " + throwables);
             }
         }
     }
@@ -69,6 +76,7 @@ public class SQLiteDBAuthService implements AuthService {
             }
         } catch (SQLException e) {
             e.printStackTrace();
+            LOGGER.error("[ОШИБКА]: " + e);
         }
         try {
             if (connection != null) {
@@ -76,6 +84,7 @@ public class SQLiteDBAuthService implements AuthService {
             }
         } catch (SQLException e) {
             e.printStackTrace();
+            LOGGER.error("[ОШИБКА]: " + e);
         }
     }
     // получить ник пользователя
@@ -89,6 +98,7 @@ public class SQLiteDBAuthService implements AuthService {
             }
         } catch (SQLException throwables) {
             throwables.printStackTrace();
+            LOGGER.info("[ОШИБКА]: " + throwables);
         }
         return nick;
     }
@@ -101,6 +111,7 @@ public class SQLiteDBAuthService implements AuthService {
             result = resultSet.next();
         } catch (SQLException e) {
             e.printStackTrace();
+            LOGGER.info("[ОШИБКА]: " + e);
         }
         return !result;
     }
@@ -115,6 +126,7 @@ public class SQLiteDBAuthService implements AuthService {
             }
         } catch (SQLException throwables) {
             throwables.printStackTrace();
+            LOGGER.info("[ОШИБКА]: " + throwables);
         }
         return id;
     }
@@ -127,6 +139,7 @@ public class SQLiteDBAuthService implements AuthService {
             statement.executeUpdate("UPDATE user SET nick = '" + newNick + "' WHERE (id = '" + id + "')");
         } catch (SQLException throwables) {
             throwables.printStackTrace();
+            LOGGER.info("[ОШИБКА]: " + throwables);
         }
     }
 

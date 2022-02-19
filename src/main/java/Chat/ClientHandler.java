@@ -1,9 +1,13 @@
 package Chat;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -22,6 +26,8 @@ public class ClientHandler {
     private DataOutputStream outputStream;
     private volatile boolean isAuth;
     private String name; // ник пользователя
+    private static final Logger LOGGER = LogManager.getLogger(ClientHandler.class);
+
     public String getName() {
         return name;
     }
@@ -42,6 +48,7 @@ public class ClientHandler {
                     readMessages();
                 } catch (IOException e) {
                     e.printStackTrace();
+                    LOGGER.info("[ОШИБКА]: " + e);
                 } finally {
                     closeConnection();
                 }
@@ -53,26 +60,33 @@ public class ClientHandler {
                     TimeUnit.SECONDS.sleep(120);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
+                    LOGGER.info("[ОШИБКА]: " + e);
                 }
                 if(!isAuth) {
                     try{
                         socket.close();
                     } catch (IOException e) {
                         e.printStackTrace();
+                        LOGGER.info("[ОШИБКА]: " + e);
                     }
                 }
             });
             service.shutdown();
 
         } catch (IOException ex) {
-            System.out.println("Проблема при создании клиента");
+            LOGGER.info("Проблема при создании клиента");
         }
     }
+
+    /**
+     * Чтение сообщения сервером от клиента
+     */
     private void readMessages() throws IOException {
         while (true) {
-            String messageFromClient = inputStream.readUTF();
-            System.out.println("от " + name + ": " + messageFromClient);
+            String messageFromClient = inputStream.readUTF();// читаем сообщение от клиента
+            LOGGER.info("[СООБЩЕНИЕ] от " + name + ": " + messageFromClient);
             if (messageFromClient.equals(ChatConstants.STOP_WORD)) {
+                LOGGER.info("[ОТКЛЮЧЕНИЕ ПОЛЬЗОВАТЕЛЯ]: "+ name);
                 return;
             } else if (messageFromClient.startsWith(ChatConstants.SEND_TO_LIST)||(messageFromClient.startsWith(ChatConstants.SEND_TO_ONE_CLIENT))) {
                 String[] splittedStr = messageFromClient.split("\\s+");
@@ -121,13 +135,16 @@ public class ClientHandler {
                         name = nick;
                         server.subscribe(this);// добавить пользователя в сервис обмена сообщениями
                         server.broadcastMessage(name + " вошел в чат");
+                        LOGGER.info("[АВТОРИЗАЦИЯ ПОЛЬЗОВАТЕЛЯ]: " + name + " вошел в чат");
                         isAuth = true;
                         return;
                     } else {
                         sendMsg("Ник уже используется");
+                        LOGGER.info("Ник уже используется");
                     }
                 } else {
                     sendMsg("Неверные логин/пароль");
+                    LOGGER.info("Неверные логин/пароль");
                 }
             }
         }
@@ -137,6 +154,7 @@ public class ClientHandler {
             outputStream.writeUTF(message);
         } catch (IOException e) {
             e.printStackTrace();
+            LOGGER.error("[ОШИБКА]: " + e);
         }
     }
     public void closeConnection() {
@@ -147,16 +165,20 @@ public class ClientHandler {
             inputStream.close();
         } catch (IOException e) {
             e.printStackTrace();
+            LOGGER.error("[ОШИБКА]: " + e);
+
         }
         try {
             outputStream.close();
         } catch (IOException e) {
             e.printStackTrace();
+            LOGGER.error("[ОШИБКА]: " + e);
         }
         try {
             socket.close();
         } catch (IOException e) {
             e.printStackTrace();
+            LOGGER.error("[ОШИБКА]: " + e);
         }
     }
 }
